@@ -1,11 +1,13 @@
 import pandas as pd
 import torch
 from torch_geometric.data import Data
+from sklearn.preprocessing import MultiLabelBinarizer
 
 def load_movielens_data():
-    # Load the ratings data
-    ratings = pd.read_csv("ml-latest-small/ml-latest-small/ratings.csv")
-    
+    # Load the ratings data and movie metadata
+    ratings = pd.read_csv('ml-latest-small/ml-latest-small/ratings.csv')
+    movies = pd.read_csv('ml-latest-small/ml-latest-small/movies.csv')
+
     # Get unique user and movie IDs
     user_ids = ratings['userId'].unique()
     movie_ids = ratings['movieId'].unique()
@@ -23,9 +25,19 @@ def load_movielens_data():
 
     edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
 
-    # Initialize node features with random values (placeholder)
-    num_nodes = len(user_ids) + len(movie_ids)
-    node_features = torch.randn((num_nodes, 2))  # Random features (2 per node)
+    # One-hot encode movie genres
+    mlb = MultiLabelBinarizer()
+    movies['genres'] = movies['genres'].apply(lambda x: x.split('|'))  # Split genres
+    genres_encoded = mlb.fit_transform(movies['genres'])
+    
+    # Initialize node features for all nodes (users + movies)
+    num_users = len(user_ids)
+    num_movies = len(movie_ids)
+    user_features = torch.randn((num_users, genres_encoded.shape[1]))  # Random features for users
+    movie_features = torch.tensor(genres_encoded, dtype=torch.float32)  # One-hot encoded genres for movies
+
+    # Concatenate user and movie features
+    node_features = torch.cat([user_features, movie_features], dim=0)
 
     # Return graph data with node features
     return Data(x=node_features, edge_index=edge_index)

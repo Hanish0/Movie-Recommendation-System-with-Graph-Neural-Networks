@@ -8,7 +8,9 @@ import torch.nn.functional as F
 data = load_movielens_data()
 
 # Initialize the model
-model = GNN(in_channels=2, hidden_channels=16, out_channels=2)  # 2 input features, 16 hidden units, 2 output features
+# Adjust `in_channels` to match the dimension of node features from data_loader.py
+model = GNN(in_channels=20, hidden_channels=16, out_channels=2)
+
 optimizer = optim.Adam(model.parameters(), lr=0.01)
 
 # Define a simple training loop
