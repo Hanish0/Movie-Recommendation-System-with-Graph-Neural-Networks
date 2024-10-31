@@ -5,14 +5,11 @@ import torch.optim as optim
 import torch.nn.functional as F
 from sklearn.metrics import mean_squared_error
 
-# Load data
-data = load_movielens_data()
-
-# Define edge labels (binary interaction label for demonstration)
-edge_labels = torch.ones(data.edge_index.size(1), dtype=torch.float32)  # Binary label for each interaction edge
+# Load data and edge labels
+data, edge_labels = load_movielens_data()
 
 # Initialize the model
-model = GNN(in_channels=20, hidden_channels=16, out_channels=1)  # Single output for binary classification
+model = GNN(in_channels=20, hidden_channels=16, out_channels=1)  # Single output for regression
 optimizer = optim.Adam(model.parameters(), lr=0.01)
 
 # Training function
@@ -23,7 +20,7 @@ def train(data, edge_labels, epochs=100):
         out = model(data)
         
         # Compute the loss for edges only
-        loss = F.binary_cross_entropy_with_logits(out[data.edge_index[0]], edge_labels)
+        loss = F.mse_loss(out[data.edge_index[0]], edge_labels)  # MSE for regression
         
         # Backpropagation and optimization
         loss.backward()
